@@ -1,0 +1,19 @@
+# Core Vanna 2.0
+vanna[gemini, sqlite]>=2.0.0
+
+# Web framework
+fastapi
+uvicorn[standard]
+
+# Data & visulization
+plotly
+pandas
+
+# Configuration
+python-dotenv
+
+# LLM Provider 
+google-genai
+
+# Testing
+pytest
