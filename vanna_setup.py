@@ -8,7 +8,7 @@ Exports a configured Vanna agent instance ready for use by the FastAPI applicati
 Components:
     - LLM Service: GeminiLlmService (Google Gemini)
     - SQL Runner: SqliteRunner (built-in SQLite support)
-    - Tools: RunSqlTool, VisualizeDateTool, SaveQuestionToolArgsTool,
+    - Tools: RunSqlTool, VisualizeDataTool, SaveQuestionToolArgsTool,
              SearchSavedCorrectToolUserTool, SaveTextMemoryTool
     - Memory: DemoAgentMemory (in-memory singleton, populated by seed_memory.py)
     - User Resolver: SimpleUserResolver (default admin user for all requests)
@@ -30,7 +30,7 @@ from dotenv import load_dotenv
 from vanna import Agent, AgentConfig
 from vanna.core.registry import ToolRegistry
 from vanna.core.user import UserResolver, User, RequestContext
-from vanna.tools import RunSqlTool, VisualizeDateTool
+from vanna.tools import RunSqlTool, VisualizeDataTool
 from vanna.tools.agent_memory import (
     SaveQuestionToolArgsTool,
     SearchSavedCorrectToolUsesTool,
