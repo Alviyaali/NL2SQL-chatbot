@@ -228,6 +228,12 @@ def validate_sql(sql: str) -> Tuple[bool, str]:
             logger.warning("Blocked keyword '%s' in SQL: %s", keyword, sql[:80])
             return False, f"Blocked keyword detected: {keyword}"
 
+    # Block UNION SELECT injection while allowing UNION ALL for analytics queries.
+    # UNION is removed from BLOCKED_SQL_KEYWORDS, this check is more precise.
+    if re.search(r"\bUNION\s+SELECT\b", sql_normalized, re.IGNORECASE):
+        logger.warning("UNION SELECT injection attempt in SQL: %s", sql[:80])
+        return False, "UNION SELECT is not allowed (SQL injection risk)"
+
     # Rule 4: System table access must be blocked even if expressed as a
     # quoted identifier or with different casing.
     sql_lower = sql_normalized.lower()

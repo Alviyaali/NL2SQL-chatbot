@@ -292,6 +292,58 @@ MEMORY_PAIRS: List[Tuple[str, str]] = [
 # ------------------------------------------------------------------------
 
 SCHEMA_MEMORIES: List[str] = [
+    # DDL entry - exact table structure so the LLM never invents tables
+    # (e.g. a 'specializations' lookup) that do not exist in the database.
+    (
+        "Database DDL - exact CREATE TABLE statements for the clinic SQLite database. "
+        "IMPORTANT: There is NO separate 'specializations' table. "
+        "The specialization value is a plain TEXT column directly on the doctors table.\n\n"
+        "CREATE TABLE patients (\n"
+        "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+        "    first_name TEXT NOT NULL,\n"
+        "    last_name TEXT NOT NULL,\n"
+        "    email TEXT,\n"
+        "    phone TEXT,\n"
+        "    date_of_birth TEXT,\n"
+        "    gender TEXT,\n"
+        "    city TEXT,\n"
+        "    registered_date TEXT NOT NULL\n"
+        ");",
+        "CREATE TABLE doctors (\n"
+        "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+        "    name TEXT NOT NULL,\n"
+        "    specialization TEXT NOT NULL,\n"
+        "    department TEXT NOT NULL,\n"
+        "    phone TEXT\n"
+        ");",
+        "CREATE TABLE appointments (\n"
+        "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+        "    patient_id INTEGER NOT NULL,\n"
+        "    doctor_id INTEGER NOT NULL,\n"
+        "    appointment_date TEXT NOT NULL,\n"
+        "    status TEXT NOT NULL,\n"
+        "    notes TEXT,\n"
+        "    FOREIGN KEY (patient_id) REFERENCES patients(id),\n"
+        "    FOREIGN KEY (doctor_id) REFERENCES doctors(id)\n"
+        ");",
+        "CREATE TABLE treatments (\n"
+        "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+        "    appointment_id INTEGER NOT NULL,\n"
+        "    treatment_name TEXT NOT NULL,\n"
+        "    cost REAL NOT NULL,\n"
+        "    duration_minutes INTEGER NOT NULL,\n"
+        "    FOREIGN KEY (appointment_id) REFERENCES appointments(id)\n"
+        ");",
+        "CREATE TABLE invoices (\n"
+        "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+        "    patient_id INTEGER NOT NULL,\n"
+        "    invoice_date TEXT NOT NULL,\n"
+        "    total_amount REAL NOT NULL,\n"
+        "    paid_amount REAL NOT NULL,\n"
+        "    status TEXT NOT NULL,\n"
+        "    FOREIGN KEY (patient_id) REFERENCES patients(id)\n"
+        ");"
+    ),
     (
         "The 'patients' table stores clinic patient records. "
         "Columns: id (INTEGER PRIMARY KEY), first_name (TEXT NOT NULL), "
@@ -451,6 +503,26 @@ async def seed_text_memories(
             )
 
     return saved_count
+
+async def seed_into(
+    agent_memory: DemoAgentMemory,
+) -> Tuple[int, int]:
+    """
+    Seed all question-SQL pairs and schema memories into agent memory.
+    
+    Convenience wrapper called by main.py at startup. Uses the module-level
+    MEMORY_PAIRS and SCHEMA_MEMORIES constants so callers do not meed to 
+    reference them directly.
+    
+    Args:
+        agent_memory: DemoAgentMemory instance to seed.
+        
+    Returns:
+        A tuple of (tool_memory_count, text_memory_count).
+    """
+    tool_count = await seed_tool_memories(agent_memory, MEMORY_PAIRS)
+    text_count = await seed_text_memories(agent_memory, SCHEMA_MEMORIES)
+    return tool_count, text_count
 
 
 async def _run_seeding() -> None:

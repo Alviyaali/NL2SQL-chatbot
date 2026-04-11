@@ -30,7 +30,8 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from vanna.core.user import RequestContext
 from vanna.components import RichTextComponent, StatusCardComponent
@@ -62,6 +63,7 @@ from validators import (
 )
 
 from vanna_setup import create_agent, get_agent_memory
+from seed_memory import seed_into
 
 # =================================================================
 # CONSTANTS
@@ -166,6 +168,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+#Serve the frontend (HTML/CSS/JS) from the frontend directory
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+@app.get("/", include_in_schema=False)
+async def root():
+    """Redirect to the base root URL to the chat frontend."""
+    return RedirectResponse(url="/static/index.html")
 
 # ================================
 # FUNCTIONS
@@ -448,6 +457,38 @@ async def process_question(question: str, client_ip: str) -> Dict[str, Any]:
         _query_cache.set(question, result)
 
     return result
+
+
+# =============================================================================
+# EVENTS
+# =============================================================================
+
+@app.on_event("startup")
+async def startup() -> None:
+    """
+    Initialise logging, the Vanna 2.0 Agent, and agent memory on startup.
+    
+    Pre-creating the agent avoids a cold-start delay on the first request
+    and surface configuration errors (missing API key, bad DB path) early.
+    
+    Memeory is re-seeded on every startup because DemoAgentMemory is 
+    im process only - it does not survive across server restarts.
+    """
+    setup_logging(LOG_LEVEL)
+    logger.info("Starting NL2SQL Clinic Chatbot\u2026")
+    try:
+        create_agent()
+        logger.info("Vanna 2.0 Agent initialised successfully")
+        tool_count, text_count = await seed_into(get_agent_memory())
+        logger.info(
+            "Agent memory seeded at startup \u2014 %d tool pairs, %d schema texts",
+            tool_count,
+            text_count,
+        )
+    except Exception as exc:
+        # Log and continue - individual requests will surface their own errors
+        logger.error("Agent initialisation failed: %s", exc, exc_info=True)
+
 
 # =============================================================================
 # ROUTES

@@ -46,7 +46,7 @@ OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3")
 
 AGENT_MEMORY_MAX_ITEMS: int = 1000
 AGENT_STREAM_RESPONSES: bool = True
-AGENT_TEMPERATURE: float = 0.7
+AGENT_TEMPERATURE: float = 0.1 #Low temperature reduces schema hallucination
 
 # ==================================================================
 # INPUT VALIDATION
@@ -67,7 +67,9 @@ BLOCKED_SQL_KEYWORDS: list = [
     "INSERT", "UPDATE", "DELETE", "DROP", "ALTER",
     "CREATE", "TRUNCATE", "EXEC", "EXECUTE",
     "xp_", "sp_", "GRANT", "REVOKE", "SHUTDOWN",
-    "UNION", "INTO OUTFILE", "LOAD_FILE",
+    "INTO OUTFILE", "LOAD_FILE",
+    # UNION is NOT blocked here - UNION ALL is valid for analytics
+    # UNION SELECT injection is caught by a targeted regex in validator.py
 ]
 
 # System tables that should never be queried directly by the user

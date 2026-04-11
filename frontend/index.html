@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NL2SQL Clinic Chatbot</title>
+    <link rel="stylesheet" href="style.css">
+    <script src = "https://cdn.plot.ly/plotly-basic-2.35.2.min.js"></script>
+</head>
+<body>
+    <!-- ====== Sidebar ====== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>🩺 NL2SQL</h2>
+            <button class="new-chat-btn" id="newChatBtn">+ New Chat</button>
+        </div>
+        <nav class="chat-history" id="chatHistory"></nav>
+        <div class="sidebar-footer">
+            <button class="clear-btn" id="clearAllBtn">🗑 Clear All Chats</button>
+        </div>
+    </aside>
+
+    <!-- ====== Main Chat Area ====== -->
+    <main class="chat-main">
+        <!-- Top bar (mobile toggle) -->
+        <header class="chat-header">
+            <button class="menu-btn" id="menuBtn">≡</button>
+            <span class="header-title">Clinic Chatbot</span>
+            <span class="header-badge">Powered by Gemini</span>
+        </header>
+
+        <!-- Messages -->
+        <div class="messages" id="messages">
+            <div class="welcome" id="welcome">
+                <h1>🩺 Clinic Chatbot</h1>
+                <p>Ask anything about your clinic data — patients, doctors, appointments, treatments, invoices.</p>
+                <div class="suggestions">
+                    <button class="suggestion" data-q="How many patients do we have?">How many patients do we have?</button>
+                    <button class="suggestion" data-q="Which doctor has the most appointments?">Which doctor has the most appointments?</button>
+                    <button class="suggestion" data-q="Show revenue trend by month">Show revenue trend by month</button>
+                    <button class="suggestion" data-q="List all doctors and their specializations">List all doctors and their specializations</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <form class="input-form" id="inputForm">
+                <textarea
+                    id="questionInput"
+                    placeholder="Ask a question about your clinic data..."
+                    rows="1"
+                    maxlength="500"
+                ></textarea>
+                <button type="submit" class="send-btn" id="sendBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13"></path>
+                        <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+                    </svg>
+                </button>
+            </form>
+            <p class="disclaimer">AI-generated SQL may be inaccurate. Always verify important results.</p>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
