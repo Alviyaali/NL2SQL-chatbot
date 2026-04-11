@@ -85,7 +85,7 @@ class SimpleUserResolver(UserResolver):
     accessible without additional auth configuration.
     """
 
-    async def get_user(self, request_context: RequestContext) -> User:
+    async def resolve_user(self, request_context: RequestContext) -> User:
         """Return a default admin user for every incoming request.
 
         Args:
@@ -97,7 +97,7 @@ class SimpleUserResolver(UserResolver):
         """
         return User(
             id="default-user",
-            name="Clinic User",
+            username="Clinic User",
             email="user@clinic.local",
             # group_memberships controls which tools this user can invoke;
             # must match the access_groups passed to register_local_tool()

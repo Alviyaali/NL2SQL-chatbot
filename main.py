@@ -32,7 +32,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from vanna.core.user import User
+from vanna.core.user import RequestContext
+from vanna.components import RichTextComponent, StatusCardComponent
 
 from config import (
     CACHE_ENABLED,
@@ -281,39 +282,46 @@ async def process_question(question: str, client_ip: str) -> Dict[str, Any]:
         # create_agent() is placed inside the try block so initialisation
         # failures (e.g. bad API key) are also caught and re-raised uniformly.
         agent = create_agent()
-        user = User(
-            id=f"api-{uuid.uuid4().hex[:8]}",
-            email="user@clinic.com",
-            group_memberships=["user"],
-        )
+        request_context = RequestContext(remote_addr=client_ip)
 
         async for component in agent.send_message(
-            user=user,
+            request_context=request_context,
             message=question,
             conversation_id=f"conv-{uuid.uuid4().hex[:8]}",
         ):
-            # Accumulate natural-language text for the final message field
-            if hasattr(component, "content") and component.content:
-                response_text_parts.append(component.content)
-
-            # Attempt to pull the SQL from a tool-call component (run_sql tool)
-            if hasattr(component, "tool_call") and component.tool_call:
-                tc = component.tool_call
-                # Support both .tool_name and .name attribute variants
-                tool_name = getattr(tc, "tool_name", None) or getattr(tc, "name", "")
-                if tool_name == "run_sql":
-                    args = getattr(tc, "args", {}) or {}
-                    if isinstance(args, dict):
-                        sql_query = args.get("sql") or sql_query
-
-            # Alternative: SQL may arrive in a tool-call-result component
-            if hasattr(component, "tool_call_result") and component.tool_call_result:
-                tcr = component.tool_call_result
-                tool_name = getattr(tcr, "tool_name", None) or getattr(tcr, "name", "")
-                if tool_name == "run_sql":
-                    result = getattr(tcr, "result", None)
-                    if result and hasattr(result, "args"):
-                        sql_query = getattr(result, "args", {}).get("sql") or sql_query
+            rc = getattr(component, "rich_component", None)
+            sc = getattr(component, "simple_component", None)
+            
+            # --- Extract SQL from StatusCardComponent.metadata ---
+            # Vanna yields a StatusCardComponent with title="Executing run_sql..."
+            # and metadata={"sql": "<query>"} before executing the RunSqlTool.
+            # We capture on status="running" (first emit) so we get the SQL
+            # before execution and re-validate it overselves below.
+            if (
+                sql_query is None
+                and isinstance(rc, StatusCardComponent)
+                and "run_sql" in (rc.title or "").lower()
+                and getattr(rc, "status", None) == "running"
+            ):
+                metadata = getattr(rc, "metadata", None) or {}
+                candidate = metadata.get("sql") if isinstance(metadata, dict) else None
+                if candidate and isinstance(candidate, str):
+                    sql_query = candidate
+                    logger.debug("SQL captured from StatusCardComponent.metadata: %s", sql_query[:120])
+                    
+            # --- Accumulate final natural-language answer text ---
+            # RichTextComponent carries the LLM's prose answer (last turn).
+            if isinstance(rc, RichTextComponent):
+                text = getattr(rc, "content", None)
+                if text:
+                    response_text_parts.append(text)
+                    
+            # SimpleTextComponent (simple_componenet.text) carries a plain-text
+            # summary - append is too so the fallback regex has content to scan.
+            if sc is not None:
+                plain = getattr(sc, "text", None)
+                if plain:
+                    response_text_parts.append(plain)
 
     except TimeoutError as exc:
         # Handle LLM request timeout specifically so the user gets a clear message
