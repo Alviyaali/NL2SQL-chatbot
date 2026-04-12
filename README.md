@@ -641,9 +641,3 @@ NL2SQL/
 ## 📄 License
 
 This project is licensed under the terms specified in [LICENSE.md](LICENSE.md).
-
----
-
-<p align="center">
-  Built with ❤️ using <strong>Vanna 2.0</strong> + <strong>FastAPI</strong> + <strong>Google Gemini</strong>
-</p>
