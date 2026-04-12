@@ -173,8 +173,8 @@ app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
 @app.get("/", include_in_schema=False)
 async def root():
-    """Redirect to the base root URL to the chat frontend."""
-    return RedirectResponse(url="/static/index.html")
+    """Redirect to the base root URL to the login page."""
+    return RedirectResponse(url="/static/login.html")
 
 # ================================
 # FUNCTIONS

@@ -11,8 +11,9 @@ const sidebar = document.getElementById("sidebar");
 const chatHistory = document.getElementById("chatHistory");
 const newChatBtn = document.getElementById("newChatBtn");
 const clearAllBtn = document.getElementById("clearAllBtn");
+const logoutBtn = document.getElementById("logoutBtn");
 const menuBtn = document.getElementById("menuBtn");
-const messageEl = document.getElementById("message");
+const messagesEl = document.getElementById("messages");
 const welcomeEl = document.getElementById("welcome");
 const inputForm = document.getElementById("inputForm");
 const questionInput = document.getElementById("questionInput");
@@ -29,7 +30,11 @@ let isLoading = false;
 
 
 function init() {
+    // Check authentication and redirect if not logged in
+    SessionManager.requireAuth();
+    
     loadConversations();
+    renderUserProfile();
     renderSidebar();
 
     // Restore last active conversation, or show welcome
@@ -44,18 +49,29 @@ function init() {
     // Event listeners
     newChatBtn.addEventListener("click", startNewChat);
     clearAllBtn.addEventListener("click", clearAllChats);
+    logoutBtn.addEventListener("click", SessionManager.logout);
     menuBtn.addEventListener("click", () => sidebar.classList.toggle("open"));
     inputForm.addEventListener("submit", handleSubmit);
     questionInput.addEventListener("input", autoResize);
     questionInput.addEventListener("keydown", handleKeydown);
+}
 
-    // Suggestion buttons
-    document.querySelectorAll(".suggestion").forEach((btn) => {
-        btn.addEventListener("click", () => {
-            questionInput.value = btn.dataset.q;
-            inputForm.dispatchEvent(new Event("submit"));
-        });
-    });
+// ==============================================================
+// USER PROFILE DISPLAY
+// ==============================================================
+
+/**
+ * Render user profile information in the chat header.
+ * Replaces the existing header-badge with user's name.
+ */
+function renderUserProfile() {
+    const user = SessionManager.getUser();
+    const headerBadge = document.querySelector('.header-badge');
+    
+    if (headerBadge && user.name) {
+        headerBadge.textContent = user.name;
+        headerBadge.title = user.email;
+    }
 }
 
 // ================================================================
@@ -165,16 +181,33 @@ function startNewChat() {
     switchConversation(conv.id);
 }
 
+/**
+ * Attach click event handlers to all suggestion buttons within a container.
+ * Centralizes event handler attachment to ensure dynamically created buttons work.
+ * @param {HTMLElement} container - The container element with suggestion buttons
+ */
+function attachSuggestionHandlers(container) {
+    container.querySelectorAll(".suggestion").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            questionInput.value = btn.dataset.q;
+            questionInput.focus();
+            inputForm.dispatchEvent(new Event("submit"));
+        });
+    });
+}
+
 function showWelcome() {
     messagesEl.innerHTML = "";
-    messagesEl.appendChild(welcomeEl.cloneNode ? createWelcomeEl() : welcomeEl);
+    messagesEl.appendChild(createWelcomeEl());
 }
 
 function createWelcomeEl() {
+    const user = SessionManager.getUser();
     const div = document.createElement("div");
     div.className = "welcome";
     div.innerHTML = `
-        <h1>📄 Clinic Chatbot</h1>
+        <p class="greeting">Hi ${escapeHtml(user.name)}, how can I help you?</p>
+        <h1>🩺 Clinic Chatbot</h1>
         <p>Ask anything about your clinic data — patients, doctors, appointments, treatments, invoices.</p>
         <div class="suggestions">
             <button class="suggestion" data-q="How many patients do we have?">How many patients do we have?</button>
@@ -184,12 +217,8 @@ function createWelcomeEl() {
         </div>
     `;
 
-    div.querySelectorAll(".suggestion").forEach((btn) => {
-        btn.addEventListener("click", () => {
-            questionInput.value = btn.dataset.q;
-            inputForm.dispatchEvent(new Event("submit"));
-        });
-    });
+    // Attach event handlers to dynamically created suggestion buttons
+    attachSuggestionHandlers(div);
 
     return div;
 }
@@ -208,11 +237,16 @@ function renderMessages() {
     }
 
     conv.messages.forEach((msg, idx) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "message-wrapper";
+        
         if (msg.role === "user") {
-            messagesEl.appendChild(createUserBubble(msg.content));
+            wrapper.appendChild(createUserBubble(msg.content));
         } else {
-            messagesEl.appendChild(createBotBubble(msg.response, idx));
+            wrapper.appendChild(createBotBubble(msg.response, idx));
         }
+        
+        messagesEl.appendChild(wrapper);
     });
 
     scrollToBottom();
@@ -236,11 +270,14 @@ function createBotBubble(response, index) {
     const isError = response.error;
     div.className = "message " + (isError ? "error" : "bot");
 
-    let html = `<div class="avatar">${isError ? "⚠" : "🤖"}</div><div class="bubble">`;
+    let html = `<div class="avatar">${isError ? "⚠" : "G"}</div><div class="bubble">`;
 
-    // 1. Prose answer
+    // 1. Prose answer (cleaned)
     if (response.message) {
-        html += `<div class="response-text">${formatMessage(response.message)}</div>`;
+        const cleanedMessage = cleanResponseMessage(response.message);
+        if (cleanedMessage) {
+            html += `<div class="response-text">${formatMessage(cleanedMessage)}</div>`;
+        }
     }
 
     if (!isError) {
@@ -329,6 +366,47 @@ function renderChart(chart, index) {
 // FORMAT HELPERS
 // ============================================================
 
+/**
+ * Clean the response message to remove technical details and internal instructions
+ * @param {string} text - Raw message from backend
+ * @returns {string} - Cleaned user-friendly message
+ */
+function cleanResponseMessage(text) {
+    if (!text) return "";
+    
+    // Remove everything before and including "SQL Query:" or similar patterns
+    text = text.replace(/^[\s\S]*?(?:SQL Query:|Generated SQL:|Query:)\s*```[\s\S]*?```\s*/i, "");
+    
+    // Remove IMPORTANT instructions about filenames
+    text = text.replace(/IMPORTANT:.*?(?:USE FILENAME|filename).*?\.csv/gi, "");
+    
+    // Remove technical error messages and stack traces
+    text = text.replace(/Error:.*?(?:\n|$)/gi, "");
+    text = text.replace(/Traceback.*?(?:\n|$)/gi, "");
+    
+    // Remove SQL code blocks that might still be present
+    text = text.replace(/```sql[\s\S]*?```/gi, "");
+    text = text.replace(/```[\s\S]*?```/gi, "");
+    
+    // Remove lines that start with technical markers
+    text = text.split('\n')
+        .filter(line => {
+            const trimmed = line.trim().toLowerCase();
+            return !trimmed.startsWith('important:') &&
+                   !trimmed.startsWith('note:') &&
+                   !trimmed.startsWith('debug:') &&
+                   !trimmed.startsWith('error:') &&
+                   !trimmed.includes('filename:') &&
+                   !trimmed.includes('query_results_');
+        })
+        .join('\n');
+    
+    // Clean up excessive whitespace
+    text = text.replace(/\n{3,}/g, "\n\n").trim();
+    
+    return text;
+}
+
 function formatMessage(text) {
     // Clean up duplicated agent prose (known backend duplication)
     text = deduplicateText(text);
@@ -402,12 +480,18 @@ async function handleSubmit(e) {
 
     // Hide welcome, show user bubble
     clearWelcome();
-    messagesEl.appendChild(createUserBubble(question));
+    const userWrapper = document.createElement("div");
+    userWrapper.className = "message-wrapper";
+    userWrapper.appendChild(createUserBubble(question));
+    messagesEl.appendChild(userWrapper);
     scrollToBottom();
 
     // Show typing indicator
+    const typingWrapper = document.createElement("div");
+    typingWrapper.className = "message-wrapper";
     const typingEl = createTypingIndicator();
-    messagesEl.appendChild(typingEl);
+    typingWrapper.appendChild(typingEl);
+    messagesEl.appendChild(typingWrapper);
     scrollToBottom();
 
     // Disable input
@@ -428,9 +512,12 @@ async function handleSubmit(e) {
         saveConversations();
 
         // Remove typing, render bot bubble
-        typingEl.remove();
+        typingWrapper.remove();
         const botIdx = conv.messages.length - 1;
-        messagesEl.appendChild(createBotBubble(storable, botIdx));
+        const botWrapper = document.createElement("div");
+        botWrapper.className = "message-wrapper";
+        botWrapper.appendChild(createBotBubble(storable, botIdx));
+        messagesEl.appendChild(botWrapper);
         scrollToBottom();
 
         // Render chart if present
@@ -438,7 +525,7 @@ async function handleSubmit(e) {
             renderChart(data.chart, botIdx);
         }
     } catch (err) {
-        typingEl.remove();
+        typingWrapper.remove();
         const errorResp = {
             error: true,
             message: "Network error — could not reach the server. Is it running?",
@@ -451,7 +538,10 @@ async function handleSubmit(e) {
         };
         conv.messages.push({ role: "bot", response: errorResp });
         saveConversations();
-        messagesEl.appendChild(createBotBubble(errorResp, conv.messages.length - 1));
+        const errorWrapper = document.createElement("div");
+        errorWrapper.className = "message-wrapper";
+        errorWrapper.appendChild(createBotBubble(errorResp, conv.messages.length - 1));
+        messagesEl.appendChild(errorWrapper);
         scrollToBottom();
     } finally {
         setLoading(false);
@@ -471,7 +561,7 @@ function createTypingIndicator() {
     const div = document.createElement("div");
     div.className = "message bot";
     div.innerHTML = `
-    <div class="avatar">🤖</div>
+    <div class="avatar">G</div>
     <div class="bubble">
       <div class="typing-indicator">
         <span></span><span></span><span></span>

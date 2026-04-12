@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NL2SQL Clinic Chatbot</title>
+    <title>Clinic Chatbot</title>
+    <link rel="icon" type="image/png" href="logo/chatbot_logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src = "https://cdn.plot.ly/plotly-basic-2.35.2.min.js"></script>
 </head>
@@ -17,6 +21,7 @@
         <nav class="chat-history" id="chatHistory"></nav>
         <div class="sidebar-footer">
             <button class="clear-btn" id="clearAllBtn">🗑 Clear All Chats</button>
+            <button class="clear-btn" id="logoutBtn">🚪 Logout</button>
         </div>
     </aside>
 
@@ -33,7 +38,7 @@
         <div class="messages" id="messages">
             <div class="welcome" id="welcome">
                 <h1>🩺 Clinic Chatbot</h1>
-                <p>Ask anything about your clinic data — patients, doctors, appointments, treatments, invoices.</p>
+                <p>Ask anything about your clinic data — patients, doctors, appointments, treatments, and invoices.</p>
                 <div class="suggestions">
                     <button class="suggestion" data-q="How many patients do we have?">How many patients do we have?</button>
                     <button class="suggestion" data-q="Which doctor has the most appointments?">Which doctor has the most appointments?</button>
@@ -63,6 +68,48 @@
         </div>
     </main>
 
+    <script>
+        // ==============================================================
+        // SESSION MANAGER MODULE
+        // ==============================================================
+        const SessionManager = {
+            /**
+             * Check if user has valid session data
+             */
+            isAuthenticated() {
+                return sessionStorage.getItem('user_name') !== null &&
+                       sessionStorage.getItem('user_email') !== null;
+            },
+            
+            /**
+             * Get current user data from session
+             */
+            getUser() {
+                return {
+                    name: sessionStorage.getItem('user_name'),
+                    email: sessionStorage.getItem('user_email')
+                };
+            },
+            
+            /**
+             * Clear session and logout
+             */
+            logout() {
+                sessionStorage.removeItem('user_name');
+                sessionStorage.removeItem('user_email');
+                window.location.href = 'login.html';
+            },
+            
+            /**
+             * Redirect to login if not authenticated
+             */
+            requireAuth() {
+                if (!this.isAuthenticated()) {
+                    window.location.href = 'login.html';
+                }
+            }
+        };
+    </script>
     <script src="app.js"></script>
 </body>
 </html>
