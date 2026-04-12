@@ -47,7 +47,7 @@ Built with **Vanna 2.0 Agent**, **FastAPI**, **Google Gemini**, and **SQLite**.
 </p>
 
 <p align="center">
-  <img src="frontend/images/question_respone.jpeg" alt="Chart example" width="738">
+  <img src="frontend/images/question_response.jpeg" alt="Chart example" width="738">
 </p>
 
 ---
