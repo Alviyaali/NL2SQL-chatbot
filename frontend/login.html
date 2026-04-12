@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - NL2SQL Clinic Chatbot</title>
-    <link rel="icon" type="image/png" href="logo/chatbot_logo.png">
+    <link rel="icon" type="image/png" href="images/chatbot_logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="login-container">
         <div class="login-card">
@@ -17,44 +19,25 @@
                 <h1>🩺 Clinic Chatbot</h1>
                 <p>Sign in to access your clinic data assistant</p>
             </div>
-            
+
             <form class="login-form" id="loginForm">
                 <div class="form-group">
                     <label for="nameInput">Name</label>
-                    <input 
-                        type="text" 
-                        id="nameInput" 
-                        class="login-input" 
-                        placeholder="Enter your name"
-                        required
-                        minlength="1"
-                        maxlength="100"
-                    >
+                    <input type="text" id="nameInput" class="login-input" placeholder="Enter your name" required
+                        minlength="1" maxlength="100">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="emailInput">Email</label>
-                    <input 
-                        type="email" 
-                        id="emailInput" 
-                        class="login-input" 
-                        placeholder="Enter your email"
-                        required
-                    >
+                    <input type="email" id="emailInput" class="login-input" placeholder="Enter your email" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="passwordInput">Password</label>
-                    <input 
-                        type="password" 
-                        id="passwordInput" 
-                        class="login-input" 
-                        placeholder="Enter your password"
-                        required
-                        minlength="1"
-                    >
+                    <input type="password" id="passwordInput" class="login-input" placeholder="Enter your password"
+                        required minlength="1">
                 </div>
-                
+
                 <button type="submit" class="login-button">Sign In</button>
             </form>
         </div>
@@ -70,9 +53,9 @@
              */
             isAuthenticated() {
                 return sessionStorage.getItem('user_name') !== null &&
-                       sessionStorage.getItem('user_email') !== null;
+                    sessionStorage.getItem('user_email') !== null;
             },
-            
+
             /**
              * Get current user data from session
              */
@@ -82,7 +65,7 @@
                     email: sessionStorage.getItem('user_email')
                 };
             },
-            
+
             /**
              * Clear session and logout
              */
@@ -91,7 +74,7 @@
                 sessionStorage.removeItem('user_email');
                 window.location.href = 'login.html';
             },
-            
+
             /**
              * Redirect to login if not authenticated
              */
@@ -105,39 +88,39 @@
         // ==============================================================
         // LOGIN FORM HANDLER
         // ==============================================================
-        
+
         /**
          * Handle login form submission
          * Stores credentials in sessionStorage and redirects to chat
          */
         function handleLogin(event) {
             event.preventDefault();
-            
+
             const name = document.getElementById('nameInput').value.trim();
             const email = document.getElementById('emailInput').value.trim();
             const password = document.getElementById('passwordInput').value;
-            
+
             // Debug logging
             console.log('Login form submitted');
             console.log('Name:', name);
             console.log('Email:', email);
             console.log('Password length:', password.length);
-            
+
             // Basic validation
             if (!name || !email || !password) {
                 alert('Please fill in all fields');
                 return;
             }
-            
+
             // Store in sessionStorage
             console.log('Storing in sessionStorage...');
             sessionStorage.setItem('user_name', name);
             sessionStorage.setItem('user_email', email);
-            
+
             // Verify storage
             console.log('Stored user_name:', sessionStorage.getItem('user_name'));
             console.log('Stored user_email:', sessionStorage.getItem('user_email'));
-            
+
             // Redirect to chat interface
             console.log('Redirecting to index.html...');
             window.location.href = 'index.html';
@@ -146,18 +129,19 @@
         // ==============================================================
         // INITIALIZATION
         // ==============================================================
-        
+
         document.addEventListener('DOMContentLoaded', () => {
             // If already authenticated, redirect to chat
             if (SessionManager.isAuthenticated()) {
                 window.location.href = 'index.html';
                 return;
             }
-            
+
             // Attach form submit handler
             const loginForm = document.getElementById('loginForm');
             loginForm.addEventListener('submit', handleLogin);
         });
     </script>
 </body>
+
 </html>

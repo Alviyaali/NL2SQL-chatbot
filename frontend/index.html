@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clinic Chatbot</title>
-    <link rel="icon" type="image/png" href="logo/chatbot_logo.png">
+    <link rel="icon" type="image/png" href="images/chatbot_logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src = "https://cdn.plot.ly/plotly-basic-2.35.2.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-basic-2.35.2.min.js"></script>
 </head>
+
 <body>
     <!-- ====== Sidebar ====== -->
     <aside class="sidebar" id="sidebar">
@@ -40,10 +42,13 @@
                 <h1>🩺 Clinic Chatbot</h1>
                 <p>Ask anything about your clinic data — patients, doctors, appointments, treatments, and invoices.</p>
                 <div class="suggestions">
-                    <button class="suggestion" data-q="How many patients do we have?">How many patients do we have?</button>
-                    <button class="suggestion" data-q="Which doctor has the most appointments?">Which doctor has the most appointments?</button>
+                    <button class="suggestion" data-q="How many patients do we have?">How many patients do we
+                        have?</button>
+                    <button class="suggestion" data-q="Which doctor has the most appointments?">Which doctor has the
+                        most appointments?</button>
                     <button class="suggestion" data-q="Show revenue trend by month">Show revenue trend by month</button>
-                    <button class="suggestion" data-q="List all doctors and their specializations">List all doctors and their specializations</button>
+                    <button class="suggestion" data-q="List all doctors and their specializations">List all doctors and
+                        their specializations</button>
                 </div>
             </div>
         </div>
@@ -51,12 +56,8 @@
         <!-- Input Area -->
         <div class="input-area">
             <form class="input-form" id="inputForm">
-                <textarea
-                    id="questionInput"
-                    placeholder="Ask a question about your clinic data..."
-                    rows="1"
-                    maxlength="500"
-                ></textarea>
+                <textarea id="questionInput" placeholder="Ask a question about your clinic data..." rows="1"
+                    maxlength="500"></textarea>
                 <button type="submit" class="send-btn" id="sendBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 2L11 13"></path>
@@ -78,9 +79,9 @@
              */
             isAuthenticated() {
                 return sessionStorage.getItem('user_name') !== null &&
-                       sessionStorage.getItem('user_email') !== null;
+                    sessionStorage.getItem('user_email') !== null;
             },
-            
+
             /**
              * Get current user data from session
              */
@@ -90,7 +91,7 @@
                     email: sessionStorage.getItem('user_email')
                 };
             },
-            
+
             /**
              * Clear session and logout
              */
@@ -99,7 +100,7 @@
                 sessionStorage.removeItem('user_email');
                 window.location.href = 'login.html';
             },
-            
+
             /**
              * Redirect to login if not authenticated
              */
@@ -112,4 +113,5 @@
     </script>
     <script src="app.js"></script>
 </body>
+
 </html>
