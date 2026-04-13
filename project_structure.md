@@ -44,8 +44,12 @@ NL2SQL/
 │   ├── index.html          # Main chat interface with suggestion chips
 │   ├── app.js              # Chat logic, API calls, Plotly chart rendering
 │   ├── style.css           # Full UI styling (dark theme, responsive)
-│   └── logo/
-│       └── chatbot_logo.png
+│   └── images/
+│       ├── chatbot_logo.png
+|       ├── chat_ui.png
+|       ├── login_page.png
+|       ├── nl2sql_banner.png
+|       └── question_response.jpeg
 │
 ├── tests/                  # Unit test suite (pytest)
 │   ├── __init__.py

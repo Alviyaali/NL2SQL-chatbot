@@ -223,8 +223,10 @@ erDiagram
 ### Step 1 — Clone & install dependencies
 
 ```bash
-git clone https://github.com/<your-username>/NL2SQL.git
-cd NL2SQL
+git clone https://github.com/Alviyaali/NL2SQL-chatbot
+cd NL2SQL-chatbot
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -266,7 +268,7 @@ uvicorn main:app --port 8000
 
 Navigate to **http://localhost:8000** in your browser. You'll see a login page — enter any name, email, and password to proceed to the chat interface.
 
-### One-liner
+### One-liner (after activating the virtual environment and creating .env file)
 
 ```bash
 pip install -r requirements.txt && python setup_database.py && python seed_memory.py && uvicorn main:app --port 8000
